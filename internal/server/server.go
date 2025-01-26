@@ -29,6 +29,9 @@ func init() {
 		log.Fatal("venom")
 	}
 	pg, err := postgres.New(context.Background(), config.PgConnectURL, postgres.WithLogger(Log))
+	if err != nil {
+		log.Fatal("Cant connect pg")
+	}
 	Repository = repo.NewDebtRepo(pg, Log)
 	pref := tele.Settings{
 		Token:  config.Token,
@@ -43,4 +46,5 @@ func init() {
 	// add handlers here
 	Bot.Handle("/hello", helloHandler)
 	Bot.Handle("/list", listOfDebts)
+	Bot.Handle("/add", createDebt)
 }

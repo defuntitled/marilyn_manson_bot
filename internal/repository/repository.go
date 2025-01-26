@@ -12,7 +12,8 @@ import (
 )
 
 type DebtRepository interface {
-	GetDebtsByDabtorsAndCollector(ctx context.Context, collector int64) ([]model.Debt, error)
+	GetDebtsByCollector(ctx context.Context, collector int64) ([]model.Debt, error)
+	GetDebtByCollectorAndDebtor(ctx context.Context, collector int64, debtor string) (*model.Debt, error)
 	AddDebt(ctx context.Context, debt *model.Debt) error
 	UpdateDebt(ctx context.Context, debt *model.Debt) error
 }
@@ -29,7 +30,7 @@ func NewDebtRepo(cluster *postgres.Postgres, logger logger.Logger) *debtReposito
 	}
 }
 
-func (this *debtRepository) GetDebtsByDabtorsAndCollector(ctx context.Context, collector int64) ([]model.Debt, error) {
+func (this *debtRepository) GetDebtsByCollector(ctx context.Context, collector int64) ([]model.Debt, error) {
 	result, err := this.cluster.Pool.Query(ctx, kGetDebtsByCollectorId, collector)
 	defer result.Close()
 	if err != nil {
@@ -79,4 +80,17 @@ func (this *debtRepository) UpdateDebt(ctx context.Context, debt *model.Debt) er
 	}
 	trx.Commit(ctx)
 	return nil
+}
+
+func (rep *debtRepository) GetDebtByCollectorAndDebtor(ctx context.Context, collector int64, debtor string) (*model.Debt, error) {
+	debts, err := rep.GetDebtsByCollector(ctx, collector)
+	if err != nil {
+		return nil, err
+	}
+	for _, debt := range debts {
+		if debt.DebtId == debtor {
+			return &debt, nil
+		}
+	}
+	return nil, nil
 }
