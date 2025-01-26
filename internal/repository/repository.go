@@ -30,12 +30,12 @@ func NewDebtRepo(cluster *postgres.Postgres, logger logger.Logger) *debtReposito
 	}
 }
 
-func (this *debtRepository) GetDebtsByCollector(ctx context.Context, collector int64) ([]model.Debt, error) {
-	result, err := this.cluster.Pool.Query(ctx, kGetDebtsByCollectorId, collector)
-	defer result.Close()
+func (rep *debtRepository) GetDebtsByCollector(ctx context.Context, collector int64) ([]model.Debt, error) {
+	result, err := rep.cluster.Pool.Query(ctx, kGetDebtsByCollectorId, collector)
 	if err != nil {
 		return nil, err
 	}
+	defer result.Close()
 	debts, err := pgx.CollectRows(result, pgx.RowToStructByName[model.Debt])
 	if err != nil {
 		return nil, err
@@ -43,8 +43,8 @@ func (this *debtRepository) GetDebtsByCollector(ctx context.Context, collector i
 	return debts, nil
 }
 
-func (this *debtRepository) AddDebt(ctx context.Context, debt *model.Debt) error {
-	trx, err := this.cluster.Pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
+func (rep *debtRepository) AddDebt(ctx context.Context, debt *model.Debt) error {
+	trx, err := rep.cluster.Pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
 	if err != nil {
 		return err
 	}
@@ -61,8 +61,8 @@ func (this *debtRepository) AddDebt(ctx context.Context, debt *model.Debt) error
 	return nil
 }
 
-func (this *debtRepository) UpdateDebt(ctx context.Context, debt *model.Debt) error {
-	trx, err := this.cluster.Pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
+func (rep *debtRepository) UpdateDebt(ctx context.Context, debt *model.Debt) error {
+	trx, err := rep.cluster.Pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func (this *debtRepository) UpdateDebt(ctx context.Context, debt *model.Debt) er
 		return err
 	}
 	if res.RowsAffected() != 1 {
-		return NewOptimisticLockError("Cant update debt due to optimistic lock", pgx.ErrNoRows)
+		return NewOptimisticLockError("Cant update debt due to optimistic lock")
 	}
 	trx.Commit(ctx)
 	return nil

@@ -47,4 +47,6 @@ func init() {
 	Bot.Handle("/hello", helloHandler)
 	Bot.Handle("/list", listOfDebts)
 	Bot.Handle("/add", createDebt)
+	Bot.Handle("/close", closeDebt)
+	Bot.Handle("/debt", getDebt)
 }

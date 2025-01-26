@@ -79,3 +79,42 @@ func createDebt(c tele.Context) error {
 	}
 	return c.Reply("Success")
 }
+
+func closeDebt(c tele.Context) error {
+	debtor := c.Text()
+	debt, err := Repository.GetDebtByCollectorAndDebtor(context.Background(), c.Sender().ID, debtor)
+	if err != nil {
+		Log.Error("failed to get debts {}", map[string]interface{}{
+			"error": err,
+		})
+		return c.Reply("Venom " + err.Error())
+	}
+	if debt == nil {
+		return c.Reply("Debt doesent exists")
+	}
+	debt.SetPaid()
+	err = Repository.UpdateDebt(context.Background(), debt)
+	if err != nil {
+		Log.Error("failed to get debts {}", map[string]interface{}{
+			"error": err,
+		})
+		return c.Reply("Venom " + err.Error())
+	}
+	return c.Reply("Success")
+}
+
+func getDebt(c tele.Context) error {
+	debtor := c.Text()
+	debt, err := Repository.GetDebtByCollectorAndDebtor(context.Background(), c.Sender().ID, debtor)
+	if err != nil {
+		Log.Error("failed to get debts {}", map[string]interface{}{
+			"error": err,
+		})
+		return c.Reply("Venom " + err.Error())
+	}
+	if debt == nil {
+		return c.Reply("Debt doesent exists")
+	}
+	ans := fmt.Sprintf("Тебе должен %v %v", debt.DebtorId, debt.Amount)
+	return c.Reply(ans)
+}

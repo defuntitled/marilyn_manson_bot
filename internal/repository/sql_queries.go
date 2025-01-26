@@ -49,7 +49,7 @@ const (
     debtor_id, 
     collector_id, 
     status, 
-    updated_ts, 
+    NOW(), 
     version + 1
 	 FORM jsonb_populate_record(NULL::debts, $1::JSONB)
 	)
