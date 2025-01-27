@@ -12,25 +12,14 @@ const (
     created_ts, 
     updated_ts, 
     version
-	FORM public.debts
-	WHERE collector_id = $1::TEXT AND
-	status = 'active';
+	FROM public.debts
+	WHERE collector_id = $1::BIGINT AND
+	status = 1;
 	`
 	kInsertDebt = `
-	INSERT INTO public.debts (
-	debt_id,
-    amount,
-    currency, 
-    debtor_id, 
-    collector_id, 
-    status, 
-    created_ts, 
-    updated_ts, 
-    version
-	) 
-	VALUES (
-	 SELECT * FROM jsonb_populate_record(NULL::debts, $1::JSONB)
-	 );
+	INSERT INTO public.debts 
+	SELECT * FROM jsonb_populate_record(NULL::debts, $1::JSONB)
+	ON CONFLICT DO NOTHING;
 	`
 	kUpdateDebt = `
 	UPDATE public.debts SET (
@@ -51,7 +40,7 @@ const (
     status, 
     NOW(), 
     version + 1
-	 FORM jsonb_populate_record(NULL::debts, $1::JSONB)
+	 FROM jsonb_populate_record(NULL::debts, $1::JSONB)
 	)
 	WHERE debt_id = ($1::JSONB->>'debt_id')::TEXT AND version = ($1::JSONB->>'version')::INTEGER;
 	`

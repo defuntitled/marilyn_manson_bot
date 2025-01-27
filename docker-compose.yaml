@@ -1,0 +1,34 @@
+version: '3.5'
+
+services:
+  bot_postgres:
+    container_name: bot_pg_db
+    ports:
+      - 5432:5432
+    environment:
+
+    volumes:
+      - bot-pg-data:/var/lib/postgresql/data
+    image: postgres:15-alpine
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 1s
+      timeout: 1s
+      retries: 10
+  
+  bot:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: bot
+    image: bot
+    command: /bin/bash
+    ports:
+      - 8083:8080
+    depends_on:
+      bot_postgres:
+        condition: service_healthy
+
+volumes:
+  bot-pg-data:
+    name: bot-pg-data

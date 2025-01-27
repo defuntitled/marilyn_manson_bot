@@ -1,4 +1,4 @@
 token: 
 pooler_timeout: 1
-pg_connect_string: xxxxxxxxxxxx
+pg_connect_string: 
 log_level: info

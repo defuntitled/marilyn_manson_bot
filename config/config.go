@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
@@ -15,7 +16,7 @@ type Config struct {
 func NewConfig() (*Config, error) {
 	cfg := &Config{}
 
-	if err := cleanenv.ReadConfig("/mnt/d/projects/go/marilyn_manson_bot/config/config.yaml", cfg); err != nil {
+	if err := cleanenv.ReadConfig("/config.yaml", cfg); err != nil {
 		return nil, fmt.Errorf("failed to read config: %w", err)
 	}
 

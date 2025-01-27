@@ -88,7 +88,7 @@ func (rep *debtRepository) GetDebtByCollectorAndDebtor(ctx context.Context, coll
 		return nil, err
 	}
 	for _, debt := range debts {
-		if debt.DebtId == debtor {
+		if debt.DebtorId == debtor {
 			return &debt, nil
 		}
 	}
