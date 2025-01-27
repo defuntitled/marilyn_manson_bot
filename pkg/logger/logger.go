@@ -40,6 +40,14 @@ func NewLogrusLogger(level string) (Logger, error) {
 	}
 
 	logger.SetLevel(logrusLevel)
+	logger.SetFormatter(&logrus.JSONFormatter{})
+
+	file, err := os.OpenFile("/logs/bot.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		logger.Warn("Не удалось открыть файл для записи логов, логи будут выводиться в консоль.")
+	} else {
+		logger.SetOutput(file)
+	}
 
 	return &logrusLogger{
 		logger: logger,

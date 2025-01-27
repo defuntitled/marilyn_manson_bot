@@ -6,7 +6,7 @@ services:
     ports:
       - 5432:5432
     environment:
-
+      
     volumes:
       - bot-pg-data:/var/lib/postgresql/data
     image: postgres:15-alpine
@@ -22,7 +22,8 @@ services:
       dockerfile: ./Dockerfile
     container_name: bot
     image: bot
-    command: /bin/bash
+    volumes:
+      - bot-log:/logs
     ports:
       - 8083:8080
     depends_on:
@@ -32,3 +33,5 @@ services:
 volumes:
   bot-pg-data:
     name: bot-pg-data
+  bot-log:
+    name: bot-log

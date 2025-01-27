@@ -16,6 +16,9 @@ func helloHandler(c tele.Context) error {
 
 func listOfDebts(c tele.Context) error {
 	collector := c.Message().Sender.ID
+	if collector != c.Chat().ID {
+		return c.Reply("нельзя юзать в групповых чатах по соображениям приватности")
+	}
 	debts, err := Repository.GetDebtsByCollector(context.Background(), collector)
 	if err != nil {
 		Log.Error("failed to get debts {}", map[string]interface{}{
@@ -30,22 +33,37 @@ func listOfDebts(c tele.Context) error {
 	return c.Reply(ans)
 }
 
-func parseCreateDebtMessage(message string) (*string, *int, error) {
+func getDebtor(message string) (debtor string, err error) {
 	data := strings.Split(message, " ")
-	if len(data) == 3 {
-		debtor := data[1]
-		amount, err := strconv.Atoi(data[2])
-		if err != nil {
-			return nil, nil, err
-		}
-		return &debtor, &amount, nil
+	if len(data) < 2 {
+		err = FormatError{"message should contains debtor's nickname"}
+		return
 	}
-	return nil, nil, tele.Err("Cant parse request message")
+	debtor = data[1]
+	return
+}
+
+func getAmount(message string) (amount int, err error) {
+	Log.Info(message, map[string]interface{}{})
+	data := strings.Split(message, " ")
+	if len(data) < 3 {
+		err = FormatError{"message should contains amount"}
+		return
+	}
+	amount, err = strconv.Atoi(data[2])
+	return
 }
 
 func createDebt(c tele.Context) error {
 	Log.Info(c.Text(), map[string]interface{}{})
-	debtor, amount, err := parseCreateDebtMessage(c.Text())
+	debtor, err := getDebtor(c.Text())
+	if err != nil {
+		Log.Error("failed to get debts {}", map[string]interface{}{
+			"error": err,
+		})
+		return c.Reply("Venom " + err.Error())
+	}
+	amount, err := getAmount(c.Text())
 	if err != nil {
 		Log.Error("failed to get debts {}", map[string]interface{}{
 			"error": err,
@@ -53,11 +71,7 @@ func createDebt(c tele.Context) error {
 		return c.Reply("Venom " + err.Error())
 	}
 	Log.Info(fmt.Sprintf("debtor %v, amount %v", debtor, amount), map[string]interface{}{})
-	if debtor == nil || amount == nil {
-		Log.Error("Cant parse message", map[string]interface{}{})
-		return c.Reply("Sosal?")
-	}
-	debt, err := Repository.GetDebtByCollectorAndDebtor(context.Background(), c.Sender().ID, *debtor)
+	debt, err := Repository.GetDebtByCollectorAndDebtor(context.Background(), c.Sender().ID, debtor)
 	if err != nil {
 		Log.Error("failed to get debts {}", map[string]interface{}{
 			"error": err,
@@ -65,7 +79,7 @@ func createDebt(c tele.Context) error {
 		return c.Reply("Venom " + err.Error())
 	}
 	if debt == nil {
-		new_debt := model.NewDebt(*debtor, c.Sender().ID, *amount)
+		new_debt := model.NewDebt(debtor, c.Sender().ID, amount)
 		err = Repository.AddDebt(context.Background(), new_debt)
 		if err != nil {
 			Log.Error("failed to get debts {}", map[string]interface{}{
@@ -75,7 +89,7 @@ func createDebt(c tele.Context) error {
 		}
 	} else {
 		Log.Info("sosal?", map[string]interface{}{})
-		debt.AddAmount(*amount)
+		debt.AddAmount(amount)
 		err = Repository.UpdateDebt(context.Background(), debt)
 		if err != nil {
 			Log.Error("failed to update debts {}", map[string]interface{}{
@@ -88,7 +102,13 @@ func createDebt(c tele.Context) error {
 }
 
 func closeDebt(c tele.Context) error {
-	debtor := strings.Split(c.Text(), " ")[1]
+	debtor, err := getDebtor(c.Text())
+	if err != nil {
+		Log.Error("failed to get debts {}", map[string]interface{}{
+			"error": err,
+		})
+		return c.Reply("Venom " + err.Error())
+	}
 	debt, err := Repository.GetDebtByCollectorAndDebtor(context.Background(), c.Sender().ID, debtor)
 	if err != nil {
 		Log.Error("failed to get debts {}", map[string]interface{}{
@@ -111,7 +131,13 @@ func closeDebt(c tele.Context) error {
 }
 
 func getDebt(c tele.Context) error {
-	debtor := strings.Split(c.Text(), " ")[1]
+	debtor, err := getDebtor(c.Text())
+	if err != nil {
+		Log.Error("failed to get debts {}", map[string]interface{}{
+			"error": err,
+		})
+		return c.Reply("Venom " + err.Error())
+	}
 	debt, err := Repository.GetDebtByCollectorAndDebtor(context.Background(), c.Sender().ID, debtor)
 	if err != nil {
 		Log.Error("failed to get debts {}", map[string]interface{}{
